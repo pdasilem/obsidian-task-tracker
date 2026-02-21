@@ -1,0 +1,11 @@
+# Obsidian workspace (user-specific, changes constantly)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+
+# System files
+.DS_Store
+.trash/
+
+# Claude Code local settings
+.claude/settings.local.json
