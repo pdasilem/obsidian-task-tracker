@@ -1,170 +1,274 @@
 # Obsidian Task Tracker
 
-A local-first task management system built on [Obsidian](https://obsidian.md) and [Claude Code](https://claude.ai/claude-code). Track tasks across multiple projects using plain markdown files with YAML frontmatter, Dataview queries for dashboards, and Claude Code slash commands for automation.
+**Stop context-switching between your code editor, project manager, and notes app.** This is a local-first task management system that lives where you already work — your terminal and your text editor. Plain markdown files, zero cloud dependencies, full AI automation.
 
-## How It Works
+Built on [Obsidian](https://obsidian.md) + [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Inspired by the [Teresa Torres pattern](https://creatoreconomy.so/p/automate-your-life-with-claude-code-teresa-torres): one file per task, YAML frontmatter as the schema, Claude Code slash commands as the API, Obsidian as the UI.
+
+---
+
+## The problem
+
+You're juggling 3-5 projects. Tasks live in Linear, Notion, GitHub Issues, sticky notes, and your head. You lose 20 minutes a day just figuring out *what to work on next*. At the end of the week you can't remember what you actually shipped.
+
+## The solution
+
+Your tasks are markdown files on disk. You manage them from the terminal with one-word commands. Obsidian renders live dashboards automatically. Git tracks everything. No accounts, no sync issues, no subscription.
 
 ```
-You (in terminal)                 Obsidian (always open)
-    |                                  |
-    |  /task Fix login bug             |
-    |  --project myapp                 |
-    |  --priority high                 |
-    |                                  |
-    v                                  v
-Claude Code                    Dataview auto-refreshes
-  - creates tasks/myapp/          - dashboard updates
-    fix-login-bug.md              - kanban board updates
-  - assigns ID APP-001            - project view updates
-  - increments next_id
-    |
-    |  /today
-    v
-  - creates daily/2025/01/
-    2025-01-15.md
-  - lists due & overdue tasks
-  - fetches git activity
-    |
-    |  /done APP-001
-    v
-  - marks task done
-  - checks for unblocked tasks
-  - logs completion
-    |
-    |  /review
-    v
-  - updates daily note summary
-  - appends burndown metrics
-  - suggests tomorrow's focus
+Obsidian (think/plan)  →  /import  →  Task Tracker  →  /sync  →  Dev Session
+                                            ↑                         |
+                                        /today /plan              /done /task
+                                            ↑                         |
+                                        /review  ←────────────────────┘
 ```
 
-## Quick Start
+- **Tasks** are markdown files with YAML frontmatter in `tasks/<project>/`
+- **Obsidian** renders dashboards, kanban boards, and analytics via Dataview queries
+- **Claude Code** reads and writes task files from any terminal via slash commands
+- **Git** tracks all changes — obsidian-git plugin auto-syncs to your private repo
 
-### 1. Clone and set up
+---
+
+## What a day looks like
+
+**Morning** — open your terminal, run one command:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/obsidian-task-tracker.git my-tasks
+/today
+```
+
+Claude scans all your tasks, checks git history across every project, and generates today's daily note:
+- What's due today
+- What's overdue
+- What's in progress
+- Suggested top 3 priorities
+
+**During work** — stay in your flow:
+
+```bash
+/task "Fix auth timeout" --project myapp --priority high --effort 2h
+/done APP-017 --actual 1h
+```
+
+Tasks get created with auto-incremented IDs, filed in the right folder. Completed tasks update timestamps, log effort, and unblock dependent work. You never leave the terminal.
+
+**End of day** — one command wraps everything up:
+
+```bash
+/review
+```
+
+Claude counts what you completed, updates your daily note, appends to the burndown log, and suggests what to focus on tomorrow.
+
+**Weekly** — see the big picture:
+
+```bash
+/pulse
+```
+
+Cross-project health report: active/blocked/overdue per project, git activity, health status. Know instantly which project needs attention.
+
+---
+
+## Quick start
+
+**1. Clone and run setup**
+
+```bash
+git clone https://github.com/ignatpenshin/obsidian-task-tracker.git my-tasks
 cd my-tasks
-chmod +x setup.sh
 ./setup.sh
 ```
 
-The setup script will ask for your project names and configure everything.
+The script asks for your project names, creates all the folders and config, and initializes git. Takes 30 seconds.
 
-### 2. Open in Obsidian
+**2. Open in Obsidian**
 
-Open the folder as an Obsidian vault, then install these community plugins:
+Open the folder as a vault. Install these community plugins:
 
-| Plugin | Purpose |
-|--------|---------|
-| **Dataview** | Powers all dashboards and queries |
-| **Templater** | Template engine for daily/weekly/task notes |
-| **Periodic Notes** | Auto-creates daily and weekly notes |
-| **Calendar** | Visual calendar for daily notes |
-| **Kanban** | Board view for tasks |
-| **Tasks** | Checkbox tracking across files |
+| Plugin | Why |
+|--------|-----|
+| **Dataview** | Powers every dashboard and query |
+| **Templater** | Template engine for daily/weekly notes |
+| **Periodic Notes** | Auto-creates daily and weekly notes from templates |
+| **Calendar** | Sidebar date picker linked to daily notes |
+| **Kanban** | Drag-and-drop board view for tasks |
+| **obsidian-git** | Auto-commit and push to your private repo |
 
-#### Plugin configuration
+Configure Templater (template folder → `templates/`, enable system commands) and Periodic Notes (daily folder `daily/`, weekly folder `weekly/` — see [plugin config](#plugin-configuration) below).
 
-- **Templater**: Set template folder to `templates/`. Enable system commands if you want git activity in daily notes.
-- **Periodic Notes**: Daily format `YYYY/MM/YYYY-MM-DD`, folder `daily/`. Weekly format `YYYY/YYYY-[W]WW`, folder `weekly/`.
-- **Dataview**: Enable JavaScript queries (for advanced dashboards).
-
-### 3. Start tracking
+**3. Create your first task**
 
 ```bash
-# Create a task
-claude /task "Build landing page" --project myapp --priority high --due 2025-02-01 --effort 4h
-
-# Start your day
-claude /today
-
-# Mark tasks done
-claude /done APP-001
-
-# End-of-day review
-claude /review
-
-# Cross-project health check
-claude /pulse
+/task "Build landing page" --project myapp --priority high --due 2025-02-01 --effort 4h
 ```
 
-## Slash Commands
+Open Obsidian — the dashboard already shows it.
 
-| Command | Description |
+---
+
+## Slash commands
+
+### Daily workflow
+
+| Command | What it does |
 |---------|-------------|
-| `/task` | Create a new task with auto-generated ID |
-| `/done` | Mark a task as completed |
-| `/today` | Generate or update today's daily note |
-| `/plan` | Plan tomorrow or next week |
-| `/review` | End-of-day review with metrics |
-| `/pulse` | Cross-project health report |
-| `/sync` | Sync git activity across all project repos |
-| `/import` | Import tasks from an external list or document |
+| `/today` | Generate today's daily note with due tasks, overdue items, git activity, suggested priorities |
+| `/review` | End-of-day summary: count completions, update burndown log, suggest tomorrow's focus |
+| `/plan` | Plan tomorrow (`/plan`) or next week (`/plan week`) based on due dates and priorities |
+| `/pulse` | Cross-project health report: active/blocked/overdue per project, git activity, health status |
 
-## Directory Structure
+### Task management
+
+| Command | What it does |
+|---------|-------------|
+| `/task <title> --project X --priority high` | Create a new task with auto-incremented ID |
+| `/done TASK-ID` | Mark task completed, update timestamps, check for unblocked tasks |
+| `/sync` | Fetch latest git activity across all project repos |
+| `/import /path/to/plan.md --project X` | Import a list or feature plan as individual tasks |
+
+### Examples
+
+```bash
+# Morning
+/today
+
+# Create tasks as they come up
+/task "Add rate limiting" --project api --priority high --due 2025-03-01 --effort 2h
+/task "Update onboarding copy" --project web --priority low
+
+# Finish work
+/done API-003 --actual 3h
+
+# Import a big feature plan at once
+/import ~/notes/feature-plan.md --project api
+
+# End of day
+/review
+
+# Weekly health check
+/pulse
+```
+
+---
+
+## How it's structured
 
 ```
-vault/
-├── CLAUDE.md              # Config: vault path, project table, conventions
-├── dashboard.md           # Main Dataview dashboard
-├── tasks/
-│   └── <project>/         # Task files with YAML frontmatter
-├── projects/
-│   └── <project>.md       # Project metadata + Dataview queries
-├── daily/
-│   └── YYYY/MM/           # Daily notes
-├── weekly/
-│   └── YYYY/              # Weekly notes
-├── templates/             # Templater templates
-├── kanban/                # Kanban board files
-├── analytics/             # Burndown logs
-├── archive/               # Completed tasks
-└── .claude/commands/      # Claude Code slash commands
+my-tasks/
+├── dashboard.md              # Live Dataview-powered overview
+├── projects/                 # One file per project (metadata + queries)
+│   └── myapp.md
+├── tasks/                    # One file per task, organized by project
+│   └── myapp/
+│       ├── build-landing-page.md
+│       └── fix-auth-timeout.md
+├── daily/2025/01/            # Daily notes (auto-generated)
+├── weekly/2025/              # Weekly notes
+├── templates/                # Templater templates (daily, weekly, task, project)
+├── kanban/                   # Kanban board
+├── analytics/                # Burndown log (appended by /review)
+├── archive/                  # Completed tasks you want out of the way
+├── .claude/commands/         # The 8 slash commands
+└── CLAUDE.md                 # Config: vault path, project table, conventions
 ```
 
-## Task File Format
+### Task file format
 
-Each task is a markdown file with YAML frontmatter:
+Each task is a standalone markdown file:
 
 ```yaml
 ---
-id: APP-001
-title: Build landing page
-status: todo          # todo | in-progress | done | blocked | cancelled
-project: myapp
-priority: high        # high | medium | low
-due: 2025-02-01
-tags: [frontend, launch]
-created: 2025-01-15
+id: APP-003
+title: Add rate limiting
+status: todo              # todo | in-progress | done | blocked | cancelled
+project: api
+priority: high            # high | medium | low
+due: 2025-03-01
+tags: [backend, security]
+created: 2025-01-20
 completed:
 blocked_by:
-effort: 4h            # 30m, 1h, 2h, 4h, 1d, 2d, 1w
+effort: 2h                # 30m, 1h, 2h, 4h, 1d, 2d, 1w
 actual:
 ---
+
+## Description
+Add rate limiting to public API endpoints.
+
+## Acceptance Criteria
+- [ ] Rate limit by API key
+- [ ] Return 429 with retry-after header
+- [ ] Dashboard shows rate limit hits
+
+## Log
+- 2025-01-20: Created
 ```
 
-## Adding a New Project
+### Dashboard
 
-1. Create `projects/<name>.md` with the required frontmatter (use the project template)
+`dashboard.md` renders live Dataview queries — no manual updates needed:
+
+- Active tasks by project (todo / in-progress / blocked / done counts)
+- Overdue items
+- Due this week
+- High priority backlog
+- Recently completed (last 7 days)
+- Blocked items with dependency info
+- Project health overview
+- Weekly velocity (last 8 weeks)
+
+---
+
+## Adding projects
+
+Run `./setup.sh` again, or manually:
+
+1. Create `projects/<name>.md` with frontmatter (id_prefix, next_id, repo path)
 2. Create `tasks/<name>/` directory
 3. Add the project to the table in `CLAUDE.md`
-4. Start creating tasks with `/task --project <name>`
 
-Or re-run `./setup.sh` to add projects interactively.
+### Connecting a project repo
 
-## Design Principles
+Add a note to the `CLAUDE.md` in any project repo so Claude knows about the tracker:
 
-- **Local-first**: Everything is plain markdown files on your disk
-- **Git-friendly**: All files are diffable, mergeable text
-- **No lock-in**: Works without Claude Code (just slower). Works without Obsidian (just less pretty)
-- **Convention over configuration**: File naming, frontmatter schema, and folder structure are the "database"
+```markdown
+## Task Tracker
+Tasks tracked at /path/to/my-tasks/tasks/<project>/.
+Run /sync at session start, /done when finishing work.
+```
+
+This makes Claude aware of your task tracker in every dev session.
+
+---
+
+## Plugin configuration
+
+**Templater**
+- Template folder: `templates/`
+- Enable "Trigger on new file creation"
+- Enable "System commands" (needed for git activity in daily notes)
+
+**Periodic Notes**
+- Daily: folder `daily/{{date:YYYY}}/{{date:MM}}`, format `{{date:YYYY-MM-DD}}`, template `templates/daily-template.md`
+- Weekly: folder `weekly/{{date:YYYY}}`, format `{{date:YYYY-[W]WW}}`, template `templates/weekly-template.md`
+
+**Homepage** (optional): set to `dashboard`
+
+---
+
+## Design principles
+
+- **Local-first** — plain markdown on your disk, works offline, no accounts
+- **Git-native** — every change is tracked, diffable, mergeable
+- **No lock-in** — works without Claude Code (just slower), works without Obsidian (just less pretty)
+- **Convention over configuration** — file names, frontmatter schema, and folder structure are the database
 
 ## Requirements
 
 - [Obsidian](https://obsidian.md) (free)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (for slash commands)
-- Git (for version control and sync)
+- Git
 
 ## License
 
