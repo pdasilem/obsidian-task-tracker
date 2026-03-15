@@ -2,7 +2,7 @@
 
 **Stop context-switching between your code editor, project manager, and notes app.** This is a local-first task management system that lives where you already work — your terminal and your text editor. Plain markdown files, zero cloud dependencies, full AI automation.
 
-Built on [Obsidian](https://obsidian.md) + [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Inspired by the [Teresa Torres pattern](https://creatoreconomy.so/p/automate-your-life-with-claude-code-teresa-torres): one file per task, YAML frontmatter as the schema, Claude Code slash commands as the API, Obsidian as the UI.
+Built on [Obsidian](https://obsidian.md) with support for both [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and OpenAI Codex. Inspired by the [Teresa Torres pattern](https://creatoreconomy.so/p/automate-your-life-with-claude-code-teresa-torres): one file per task, YAML frontmatter as the schema, assistant-facing config in-repo, Obsidian as the UI.
 
 ---
 
@@ -24,7 +24,8 @@ Obsidian (think/plan)  →  /import  →  Task Tracker  →  /sync  →  Dev Ses
 
 - **Tasks** are markdown files with YAML frontmatter in `tasks/<project>/`
 - **Obsidian** renders dashboards, kanban boards, and analytics via Dataview queries
-- **Claude Code** reads and writes task files from any terminal via slash commands
+- **Claude Code** reads and writes task files via slash commands and `CLAUDE.md`
+- **OpenAI Codex** uses `AGENTS.md`, `setup-codex.sh`, `add-project.sh`, and `remove-project.sh`
 - **Git** tracks all changes — obsidian-git plugin auto-syncs to your private repo
 
 ---
@@ -72,15 +73,37 @@ Cross-project health report: active/blocked/overdue per project, git activity, h
 
 ## Quick start
 
-**1. Clone and run setup**
+**1. Clone and choose your setup path**
 
 ```bash
-git clone https://github.com/ignatpenshin/obsidian-task-tracker.git my-tasks
-cd my-tasks
-./setup.sh
+git clone https://github.com/ignatpenshin/obsidian-task-tracker.git ~/project-board
+cd ~/project-board
+
+# Claude Code environment
+./setup-claude.sh
+
+# Codex environment
+./setup-codex.sh
 ```
 
-The script asks for your project names, creates all the folders and config, and initializes git. Takes 30 seconds.
+The setup scripts ask for your project names, create the shared vault folders, configure the assistant-facing root files, and can initialize git. Takes about 30 seconds.
+
+Both setup scripts prompt for the same project metadata:
+- project name
+- display name
+- ID prefix
+- optional git repo path for the real working project
+
+Example:
+- task tracker installed at `~/project-board`
+- working repo for your app at `/home/you/work/myapp`
+- when setup asks for `Git repo path`, enter `/home/you/work/myapp`
+
+You can also run Codex setup non-interactively:
+
+```bash
+./setup-codex.sh --project myapp --display-name "My App" --prefix APP --repo /home/you/work/myapp
+```
 
 **2. Open in Obsidian**
 
@@ -97,7 +120,46 @@ Open the folder as a vault. Install these community plugins:
 
 Configure Templater (template folder → `templates/`, enable system commands) and Periodic Notes (daily folder `daily/`, weekly folder `weekly/` — see [plugin config](#plugin-configuration) below).
 
-**3. Create your first task**
+**3. Manage projects**
+
+```bash
+./add-project.sh --name myapp --display-name "My App" --prefix APP --repo /home/you/work/myapp
+./remove-project.sh --name myapp
+```
+
+These scripts keep both `CLAUDE.md` and `AGENTS.md` in sync with the shared project registry.
+Use `--repo` to link the task-tracker project to the absolute path of the real working repository whose git activity should be tracked.
+
+### Typical workflow
+
+Example:
+- task tracker installed at `~/project-board`
+- first working repository at `/home/you/work/myapp`
+- second working repository at `/home/you/work/api`
+
+```bash
+git clone https://github.com/ignatpenshin/obsidian-task-tracker.git ~/project-board
+cd ~/project-board
+
+# Choose one setup path
+./setup-claude.sh
+# or
+./setup-codex.sh
+
+# When prompted for the first project, enter:
+# Project name: myapp
+# Display name: My App
+# ID prefix: APP
+# Git repo path: /home/you/work/myapp
+
+# Add another linked project later
+./add-project.sh --name api --display-name "API Service" --prefix API --repo /home/you/work/api
+
+# Remove a project from both assistant environments
+./remove-project.sh --name api
+```
+
+**4. Create your first task**
 
 ```bash
 /task "Build landing page" --project myapp --priority high --due 2025-02-01 --effort 4h
@@ -108,6 +170,8 @@ Open Obsidian — the dashboard already shows it.
 ---
 
 ## Slash commands
+
+These slash commands are the Claude Code workflow surface. Codex uses the root shell scripts and the same shared markdown vault.
 
 ### Daily workflow
 
@@ -169,8 +233,9 @@ my-tasks/
 ├── kanban/                   # Kanban board
 ├── analytics/                # Burndown log (appended by /review)
 ├── archive/                  # Completed tasks you want out of the way
-├── .claude/commands/         # The 8 slash commands
-└── CLAUDE.md                 # Config: vault path, project table, conventions
+├── .claude/commands/         # The 8 Claude Code slash commands
+├── AGENTS.md                 # Codex config: vault path, project table, conventions
+└── CLAUDE.md                 # Claude config: vault path, project table, conventions
 ```
 
 ### Task file format
@@ -222,11 +287,12 @@ Add rate limiting to public API endpoints.
 
 ## Adding projects
 
-Run `./setup.sh` again, or manually:
+Run `./add-project.sh`, `./remove-project.sh`, `./setup-claude.sh`, or `./setup-codex.sh` as appropriate, or manage the files manually:
 
 1. Create `projects/<name>.md` with frontmatter (id_prefix, next_id, repo path)
 2. Create `tasks/<name>/` directory
 3. Add the project to the table in `CLAUDE.md`
+4. Add the project to the table in `AGENTS.md`
 
 ### Connecting a project repo
 
@@ -268,6 +334,7 @@ This makes Claude aware of your task tracker in every dev session.
 
 - [Obsidian](https://obsidian.md) (free)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (for slash commands)
+- OpenAI Codex (for `AGENTS.md` + shell-script workflow)
 - Git
 
 ## License
