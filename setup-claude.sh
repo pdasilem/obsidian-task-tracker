@@ -20,6 +20,16 @@ tracker_info ""
 tracker_info "Enter your project names (one per line, lowercase, no spaces)."
 tracker_info "For each project you'll also set a display name, ID prefix, and optional repo path."
 tracker_info "Press Enter on an empty line when done."
+tracker_info "Input order for one project:"
+tracker_info "  1. Project name"
+tracker_info "  2. Display name"
+tracker_info "  3. ID prefix"
+tracker_info "  4. Git repo path"
+tracker_info "Example stdin block for one project:"
+tracker_info "  myapp"
+tracker_info "  My App"
+tracker_info "  APP"
+tracker_info "  /home/you/work/myapp"
 tracker_info ""
 
 projects=()
@@ -27,13 +37,13 @@ declare -A seen_names=()
 declare -A seen_prefixes=()
 
 while true; do
-  name="$(tracker_prompt "Project name (or Enter to finish)")"
+  name="$(tracker_prompt "Project name (lowercase, no spaces; Enter to finish, e.g. myapp)")"
   [[ -z "$name" ]] && break
 
-  full_name="$(tracker_prompt "  Display name" "$name")"
-  prefix="$(tracker_prompt "  ID prefix" "$(suggest_prefix "$name")")"
+  full_name="$(tracker_prompt "  Display name (human-readable, e.g. My App)" "$name")"
+  prefix="$(tracker_prompt "  ID prefix (uppercase short code, e.g. APP)" "$(suggest_prefix "$name")")"
   prefix="$(tracker_normalize_prefix "$prefix")"
-  repo_path="$(tracker_prompt "  Git repo path (optional, Enter to skip)")"
+  repo_path="$(tracker_prompt "  Git repo path (optional absolute path, e.g. /home/you/work/myapp)" )"
 
   tracker_project_name_valid "$name" || tracker_die "Invalid project name: $name" 2
   [[ -n "$full_name" ]] || tracker_die "Display name cannot be empty for project: $name" 2
@@ -128,7 +138,8 @@ tracker_info "  3. Configure Templater: set template folder to 'templates/'"
 tracker_info "  4. Configure Periodic Notes:"
 tracker_info "     - Daily: format 'YYYY/MM/YYYY-MM-DD', folder 'daily/'"
 tracker_info "     - Weekly: format 'YYYY/YYYY-[W]WW', folder 'weekly/'"
-tracker_info "  5. Start tracking: claude /task \"My first task\" --project <name>"
+tracker_info "  5. Example project link: /home/you/work/myapp"
+tracker_info "  6. Start tracking: claude /task \"My first task\" --project <name>"
 tracker_info ""
 tracker_info "You can safely delete projects/_example.md and tasks/_example/"
 tracker_info "once you've created your own projects."
