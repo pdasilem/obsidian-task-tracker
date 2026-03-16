@@ -150,8 +150,18 @@ Open the folder as a vault. Install these community plugins:
 | **obsidian-git**   | Auto-commit and push to your private repo          |
 
 Configure:
-- Templater: template folder `templates/`, enable system commands
-- Periodic Notes daily: folder `daily/`, weekly: folder `weekly/`
+
+**Templater**
+- Template folder: `templates/`
+- Enable "Trigger on new file creation"
+- Enable "System commands"
+
+**Periodic Notes**
+- Daily: folder `daily/{{date:YYYY}}/{{date:MM}}`, format `{{date:YYYY-MM-DD}}`, template `templates/daily-template.md`
+- Weekly: folder `weekly/{{date:YYYY}}`, format `{{date:YYYY-[W]WW}}`, template `templates/weekly-template.md`
+
+**Homepage** (optional)
+- `dashboard`
 
 **4. Manage projects**
 
@@ -317,22 +327,6 @@ Add a note to the `CLAUDE.md` in any project repo so Claude knows about the trac
 Tasks tracked at /path/to/my-tasks/tasks/<project>/.
 Run /sync at session start, /done when finishing work.
 ```
-
----
-
-## Plugin configuration
-
-**Templater**
-- Template folder: `templates/`
-- Enable "Trigger on new file creation"
-- Enable "System commands"
-
-**Periodic Notes**
-- Daily: folder `daily/{{date:YYYY}}/{{date:MM}}`, format `{{date:YYYY-MM-DD}}`, template `templates/daily-template.md`
-- Weekly: folder `weekly/{{date:YYYY}}`, format `{{date:YYYY-[W]WW}}`, template `templates/weekly-template.md`
-
-**Homepage** (optional)
-- `dashboard`
 
 ---
 
