@@ -1,3 +1,8 @@
+---
+name: today
+description: Generate or update today's daily note.
+---
+
 Generate or update today's daily note.
 
 Read the `vault_path` field from the CLAUDE.md in the task tracker root to determine the base path. All file paths below are relative to that vault_path.

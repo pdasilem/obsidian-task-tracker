@@ -1,11 +1,16 @@
+---
+name: import
+description: Import tasks from an external list or document.
+---
+
 Import tasks from an external list or document.
 
 Read the `vault_path` field from the CLAUDE.md in the task tracker root to determine the base path. All file paths below are relative to that vault_path.
 
 ## Usage
 
-- `/import <file-path> --project <project>` — import from a file
-- `/import` — then paste a list interactively
+- `/import <file-path> --project <project>` — parse a note, list, or plan from a file
+- `/import` — then paste a list or note interactively
 
 Examples:
 - `/import ~/notes/feature-list.md --project myapp`
@@ -17,7 +22,7 @@ Examples:
    - If a file path is provided, read the file
    - If no path, ask the user to paste a list of tasks
 2. Read the project file `projects/<project>.md` to get `id_prefix` and `next_id`.
-3. Parse the input into individual tasks. Handle these formats:
+3. Parse and decompose the input into individual tasks. Handle these formats:
    - Markdown lists (`- [ ] task` or `- task`)
    - Numbered lists (`1. task`)
    - CSV with headers (title, priority, due, effort, tags)
@@ -29,8 +34,8 @@ Examples:
    - Increment `next_id`
 5. Update `next_id` in the project file's frontmatter (once, with the final value).
 6. Print a summary:
-   - Number of tasks imported
+   - Number of tasks created
    - List of task IDs and titles
-   - Any lines that couldn't be parsed (ask about them)
+   - Any lines or sections that could not be cleanly decomposed into tasks
 
 $ARGUMENTS

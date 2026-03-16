@@ -21,6 +21,7 @@ Uses YAML frontmatter in markdown files, Dataview queries, and Templater templat
 
 - Path: `tasks/{project}/{kebab-case-slug}.md`
 - Required frontmatter: id, title, status, project, priority, created
+- Optional frontmatter: jira_key, jira_url
 - Status: todo | in-progress | done | blocked | cancelled
 - Priority: high | medium | low
 - Dates: YYYY-MM-DD
@@ -37,7 +38,8 @@ Uses YAML frontmatter in markdown files, Dataview queries, and Templater templat
 1. Read `projects/<project>.md` to get `id_prefix` and `next_id`
 2. Generate ID: `{id_prefix}-{next_id zero-padded to 3}`
 3. Create `tasks/<project>/<slug>.md`
-4. Increment `next_id` in the project file
+4. If task source is Jira, store `jira_key` and `jira_url`
+5. Increment `next_id` in the project file
 
 ## When Completing Tasks
 

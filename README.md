@@ -1,100 +1,92 @@
 # Obsidian Task Tracker
 
-**Stop context-switching between your code editor, project manager, and notes app.** This is a local-first task management system that lives where you already work — your terminal and your text editor. Plain markdown files, zero cloud dependencies, full AI automation.
+**Stop context-switching between your code editor, project manager, and notes app.** This is a local-first task management system that lives where you already work: your terminal and your text editor. Plain markdown files, zero cloud dependencies, full AI automation.
 
-Built on [Obsidian](https://obsidian.md) with support for both [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and OpenAI Codex. Inspired by the [Teresa Torres pattern](https://creatoreconomy.so/p/automate-your-life-with-claude-code-teresa-torres): one file per task, YAML frontmatter as the schema, assistant-facing config in-repo, Obsidian as the UI.
+Built on [Obsidian](https://obsidian.md) with support for both Claude Code and OpenAI Codex. Inspired by the [Teresa Torres pattern](https://creatoreconomy.so/p/automate-your-life-with-claude-code-teresa-torres): one file per task, YAML frontmatter as the schema, assistant-facing config in-repo, Obsidian as the UI.
 
 ---
 
 ## The problem
 
-You're juggling 3-5 projects. Tasks live in Linear, Notion, GitHub Issues, sticky notes, and your head. You lose 20 minutes a day just figuring out *what to work on next*. At the end of the week you can't remember what you actually shipped.
+You're juggling 3..5 projects. Tasks live in Jira, chat threads, issue trackers, sticky notes, and your head. You 
+lose time every day just figuring out what to work on next. At the end of the week you can't remember what you actually shipped.
 
 ## The solution
 
-Your tasks are markdown files on disk. Claude Code manages them with slash commands, while Codex Agent uses `AGENTS.md` plus `/skills:<name>` entries registered from this repo's `.claude/commands/`. Obsidian renders live dashboards automatically. Git tracks everything. No accounts, no sync issues, no subscription.
+Your tasks are markdown files on disk. The agent manages them with slash commands. Obsidian renders live dashboards automatically. Git tracks everything.
 
 ```
 Obsidian (think/plan)  ->  Agent command  ->  Task Tracker  ->  Repo work
                                 |                                  |
-                    Claude: /task /done /today               Git activity
-                    Codex:  /skills:task /skills:done
+                        /task /done /today                   Git activity
+                                |
+                   Codex: add the `skills:` prefix
 ```
 
-- **Tasks** are markdown files with YAML frontmatter in `tasks/<project>/`
-- **Obsidian** renders dashboards, kanban boards, and analytics via Dataview queries
-- **Claude Code** reads and writes task files via slash commands and `CLAUDE.md`
-- **OpenAI Codex Agent** uses `AGENTS.md`, `setup-codex.sh`, `refresh-codex-skills.sh`, and skills registered into `~/.agents/skills`
-- **Git** tracks all changes — obsidian-git plugin auto-syncs to your private repo
+- **Tasks** live in `tasks/<project>/` as markdown files with YAML frontmatter.
+- **Obsidian** renders dashboards, kanban boards, and analytics via Dataview queries.
+- **Claude Code** uses `.claude/commands/` and `CLAUDE.md`.
+- **Codex Agent** uses the same command prompts copied into `~/.agents/skills/<name>/SKILL.md` plus `AGENTS.md`.
+- **Git** tracks all changes and can be auto-synced from Obsidian if you want.
 
 ---
 
-## Agent surfaces
+## Command rule
 
-| Environment | Trigger style | Source of truth | Install step |
-|-------------|---------------|-----------------|--------------|
-| **Claude Code** | `/task`, `/done`, `/today` | `.claude/commands/` + `CLAUDE.md` | `./setup-claude.sh` |
-| **Codex Agent** | `/skills:task`, `/skills:done`, `/skills:today` | `.claude/commands/` + `AGENTS.md` | `./setup-codex.sh` |
+Use the commands exactly as shown below in Claude Code.
 
-Both agents operate on the same markdown vault, the same project files, and the same task files.
+If you use Codex Agent, add the `skills:` prefix to the command name:
+- Claude Code: `/done APP-003`
+- Codex Agent: `/skills:done APP-003`
+
+That rule applies to all workflow commands:
+- `/today`
+- `/review`
+- `/plan`
+- `/pulse`
+- `/task`
+- `/done`
+- `/sync`
+- `/import`
+- `/jira-push`
 
 ---
 
 ## What a day looks like
 
-**Morning** — open your terminal, run one command:
+**Morning**
 
 ```bash
-# Claude Code
 /today
-
-# Codex Agent
-/skills:today
 ```
 
-The active agent scans all your tasks, checks git history across every project, and generates today's daily note:
-- What's due today
-- What's overdue
-- What's in progress
-- Suggested top 3 priorities
+The agent scans all your tasks, checks git history across every project, and generates today's daily note:
+- what's due today
+- what's overdue
+- what's in progress
+- suggested top 3 priorities
 
-**During work** — stay in your flow:
+**During work**
 
 ```bash
-# Claude Code
 /task "Fix auth timeout" --project myapp --priority high --effort 2h
+/task https://your-company.atlassian.net/browse/APP-42 --project myapp --priority high
 /done APP-017 --actual 1h
-
-# Codex Agent
-/skills:task "Fix auth timeout" --project myapp --priority high --effort 2h
-/skills:done APP-017 --actual 1h
 ```
 
-Tasks get created with auto-incremented IDs, filed in the right folder. Completed tasks update timestamps, log effort, and unblock dependent work. You never leave the terminal.
+Tasks get created with auto-incremented local IDs, filed in the right folder, and updated in place. If `/task` receives a Jira issue URL and Jira MCP integration is available, it pulls the Jira title and description into the tracker task.
 
-**End of day** — one command wraps everything up:
+**End of day**
 
 ```bash
-# Claude Code
 /review
-
-# Codex Agent
-/skills:review
 ```
 
-The active agent counts what you completed, updates your daily note, appends to the burndown log, and suggests what to focus on tomorrow.
-
-**Weekly** — see the big picture:
+**Weekly**
 
 ```bash
-# Claude Code
 /pulse
-
-# Codex Agent
-/skills:pulse
 ```
-
-Cross-project health report: active/blocked/overdue per project, git activity, health status. Know instantly which project needs attention.
 
 ---
 
@@ -103,62 +95,63 @@ Cross-project health report: active/blocked/overdue per project, git activity, h
 **1. Clone into the folder you want to use**
 
 ```bash
-# Example: install the tracker into ~/project-board
 git clone https://github.com/ignatpenshin/obsidian-task-tracker.git ~/project-board
 cd ~/project-board
 ```
 
-This repository becomes your tracker vault in that exact folder. The setup script initializes the tracker there.
+This repository becomes your tracker vault in that exact folder.
 
 **2. Choose your setup path**
 
 ```bash
-# Claude Code environment
+# Claude Code
 ./setup-claude.sh
 
-# Codex Agent environment
+# Codex Agent
 ./setup-codex.sh
 ```
 
-The setup scripts ask for your project names, create the shared vault folders, configure the assistant-facing root files, and can initialize git. `setup-codex.sh` also detects Linux, macOS, or Windows and registers Codex skills in your user `~/.agents/skills` directory by symlinking them to this repo's `.claude/commands/`.
-
-If you later add, rename, or remove files in `.claude/commands/`, run:
-
-```bash
-./refresh-codex-skills.sh
-```
-
-Both setup scripts prompt for the same project metadata:
+Both setup scripts ask for the same project metadata:
 - project name
 - display name
 - ID prefix
 - optional git repo path for the real working project
 
 Example:
-- task tracker installed at `~/project-board`
-- working repo for your app at `/home/you/work/myapp`
-- when setup asks for `Git repo path`, enter `/home/you/work/myapp`
+- tracker installed at `~/project-board`
+- working repo at `/home/you/work/myapp`
+- when prompted for `Git repo path`, enter `/home/you/work/myapp`
 
-You can also run Codex setup non-interactively:
+Codex-only note:
+- `setup-codex.sh` detects Linux, macOS, or Windows
+- it copies prompts from `.claude/commands/` into `~/.agents/skills/<name>/SKILL.md`
+- it rewrites `CLAUDE.md` to `AGENTS.md`
+- it rewrites `/command` to `/skills:command`
+
+If you later add or change files in `.claude/commands/`, run:
 
 ```bash
-./setup-codex.sh --project myapp --display-name "My App" --prefix APP --repo /home/you/work/myapp
+./refresh-codex-skills.sh
 ```
+
+Then restart Codex.
 
 **3. Open in Obsidian**
 
 Open the folder as a vault. Install these community plugins:
 
-| Plugin | Why |
-|--------|-----|
-| **Dataview** | Powers every dashboard and query |
-| **Templater** | Template engine for daily/weekly notes |
+| Plugin             | Why                                                |
+|--------------------|----------------------------------------------------|
+| **Dataview**       | Powers every dashboard and query                   |
+| **Templater**      | Template engine for daily and weekly notes         |
 | **Periodic Notes** | Auto-creates daily and weekly notes from templates |
-| **Calendar** | Sidebar date picker linked to daily notes |
-| **Kanban** | Drag-and-drop board view for tasks |
-| **obsidian-git** | Auto-commit and push to your private repo |
+| **Calendar**       | Sidebar date picker linked to daily notes          |
+| **Kanban**         | Drag-and-drop board view for tasks                 |
+| **obsidian-git**   | Auto-commit and push to your private repo          |
 
-Configure Templater (template folder → `templates/`, enable system commands) and Periodic Notes (daily folder `daily/`, weekly folder `weekly/` — see [plugin config](#plugin-configuration) below).
+Configure:
+- Templater: template folder `templates/`, enable system commands
+- Periodic Notes daily: folder `daily/`, weekly: folder `weekly/`
 
 **4. Manage projects**
 
@@ -167,150 +160,106 @@ Configure Templater (template folder → `templates/`, enable system commands) a
 ./remove-project.sh --name myapp
 ```
 
-These scripts keep both `CLAUDE.md` and `AGENTS.md` in sync with the shared project registry.
-Use `--repo` to link the task-tracker project to the absolute path of the real working repository whose git activity should be tracked.
-
-### Typical workflow
-
-Example:
-- task tracker installed at `~/project-board`
-- first working repository at `/home/you/work/myapp`
-- second working repository at `/home/you/work/api`
-
-```bash
-git clone https://github.com/ignatpenshin/obsidian-task-tracker.git ~/project-board
-cd ~/project-board
-
-# Choose one setup path
-./setup-claude.sh
-# or
-./setup-codex.sh
-
-# When prompted for the first project, enter:
-# Project name: myapp
-# Display name: My App
-# ID prefix: APP
-# Git repo path: /home/you/work/myapp
-
-# Add another linked project later
-./add-project.sh --name api --display-name "API Service" --prefix API --repo /home/you/work/api
-
-# Remove a project from both assistant environments
-./remove-project.sh --name api
-```
+These scripts keep `CLAUDE.md` and `AGENTS.md` in sync with the shared project registry.
 
 **5. Start working**
 
 ```bash
-# Claude Code
 /task "Build landing page" --project myapp --priority high --due 2025-02-01 --effort 4h
+```
 
-# Codex Agent
+If you use Codex Agent:
+
+```bash
 /skills:task "Build landing page" --project myapp --priority high --due 2025-02-01 --effort 4h
 ```
 
-For Codex Agent, run `./setup-codex.sh` once, restart Codex, and use the registered skills `task`, `done`, `today`, `review`, `plan`, `pulse`, `import`, and `sync`.
-Those skills are registered in `~/.agents/skills`, but their `SKILL.md` files are symlinks back to this repository's `.claude/commands/`, so the source of truth stays in the project.
-After changing `.claude/commands/`, run `./refresh-codex-skills.sh` and restart Codex.
-
-Open Obsidian — the dashboard already shows your project/task files.
+Open Obsidian and the dashboard already shows your project and task files.
 
 ---
 
 ## Workflow commands
 
-The same workflow is available in both agents. Claude uses direct slash commands. Codex Agent uses the same prompt source through `/skills:<name>`.
-
 ### Daily workflow
 
-| Claude Code | Codex Agent | What it does |
-|-------------|-------------|--------------|
-| `/today` | `/skills:today` | Generate today's daily note with due tasks, overdue items, git activity, suggested priorities |
-| `/review` | `/skills:review` | End-of-day summary: count completions, update burndown log, suggest tomorrow's focus |
-| `/plan` | `/skills:plan` | Plan tomorrow (`plan`) or next week (`plan week`) based on due dates and priorities |
-| `/pulse` | `/skills:pulse` | Cross-project health report: active/blocked/overdue per project, git activity, health status |
+| Command   | What it does                                                                                      |
+|-----------|---------------------------------------------------------------------------------------------------|
+| `/today`  | Generate today's daily note with due tasks, overdue items, git activity, and suggested priorities |
+| `/review` | End-of-day summary: count completions, update burndown log, suggest tomorrow's focus              |
+| `/plan`   | Plan tomorrow or next week based on due dates and priorities                                      |
+| `/pulse`  | Cross-project health report: active, blocked, overdue per project, git activity, health status    |
 
 ### Task management
 
-| Claude Code | Codex Agent | What it does |
-|-------------|-------------|--------------|
-| `/task <title> --project X --priority high` | `/skills:task <title> --project X --priority high` | Create a new task with auto-incremented ID |
-| `/done TASK-ID` | `/skills:done TASK-ID` | Mark task completed, update timestamps, check for unblocked tasks |
-| `/sync` | `/skills:sync` | Fetch latest git activity across all project repos |
-| `/import /path/to/plan.md --project X` | `/skills:import /path/to/plan.md --project X` | Import a list or feature plan as individual tasks |
+| Command                                        | What it does                                                                                              |
+|------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `/task <title> --project X --priority high`    | Create a new local task with an auto-incremented tracker ID                                               |
+| `/task <jira-url> --project X --priority high` | Fetch a Jira issue through MCP, prepend the Jira key to the local title, and create a linked tracker task |
+| `/done TASK-ID`                                | Mark a task completed, update timestamps, check for unblocked tasks                                       |
+| `/sync`                                        | Fetch latest git activity across all project repos                                                        |
+| `/import /path/to/plan.md --project X`         | Parse a note, list, or feature plan and decompose it into individual task files                           |
+| `/jira-push TASK-ID`                           | Create a Jira issue from an existing local task and write back the Jira key and URL                       |
 
 ### Examples
 
 ```bash
-# Morning in Claude Code
 /today
-
-# Morning in Codex Agent
-/skills:today
-
-# Create tasks as they come up in Claude Code
 /task "Add rate limiting" --project api --priority high --due 2025-03-01 --effort 2h
-/task "Update onboarding copy" --project web --priority low
-
-# Create tasks as they come up in Codex Agent
-/skills:task "Add rate limiting" --project api --priority high --due 2025-03-01 --effort 2h
-/skills:task "Update onboarding copy" --project web --priority low
-
-# Finish work in Claude Code
+/task https://your-company.atlassian.net/browse/API-42 --project api --priority high
 /done API-003 --actual 3h
-
-# Finish work in Codex Agent
-/skills:done API-003 --actual 3h
-
-# Import a big feature plan at once in Claude Code
 /import ~/notes/feature-plan.md --project api
-
-# Import a big feature plan at once in Codex Agent
-/skills:import ~/notes/feature-plan.md --project api
-
-# End of day in Claude Code
+/jira-push API-003
 /review
-
-# End of day in Codex Agent
-/skills:review
-
-# Weekly health check in Claude Code
 /pulse
-
-# Weekly health check in Codex Agent
-/skills:pulse
 ```
+
+---
+
+## Jira-linked tasks
+
+Local tracker IDs stay in the tracker format:
+- `APP-001`
+- `API-014`
+
+Jira does not replace that ID.
+
+When a task is created from Jira:
+- the local task title becomes `{JIRA-KEY}: {Jira summary}`
+- the local `id` still uses the tracker prefix
+- the task can also store:
+  - `jira_key`
+  - `jira_url`
+
+When a local task is pushed to Jira:
+- the local title and description are used to create the Jira issue
+- the returned Jira key and URL are written back to the task file
 
 ---
 
 ## How it's structured
 
-```
+```text
 my-tasks/
-├── dashboard.md              # Live Dataview-powered overview
-├── projects/                 # One file per project (metadata + queries)
-│   └── myapp.md
-├── tasks/                    # One file per task, organized by project
-│   └── myapp/
-│       ├── build-landing-page.md
-│       └── fix-auth-timeout.md
-├── daily/2025/01/            # Daily notes (auto-generated)
-├── weekly/2025/              # Weekly notes
-├── templates/                # Templater templates (daily, weekly, task, project)
-├── kanban/                   # Kanban board
-├── analytics/                # Burndown log (appended by /review)
-├── archive/                  # Completed tasks you want out of the way
-├── .claude/commands/         # Source of truth for Claude commands and Codex skill prompts
-├── AGENTS.md                 # Codex config: vault path, project table, conventions
-└── CLAUDE.md                 # Claude config: vault path, project table, conventions
+├── dashboard.md
+├── projects/
+├── tasks/
+├── daily/
+├── weekly/
+├── templates/
+├── kanban/
+├── analytics/
+├── archive/
+├── .claude/commands/
+├── AGENTS.md
+└── CLAUDE.md
 ```
 
 Codex registration model:
-- project prompts stay in `.claude/commands/`
-- `setup-codex.sh` creates wrapper skill folders in `~/.agents/skills`
-- each wrapper skill contains `SKILL.md -> <repo>/.claude/commands/<name>.md`
-- `refresh-codex-skills.sh` re-syncs that registry after command changes
-- Codex picks up the user-level skill registry after restart
+- prompts stay in `.claude/commands/`
+- `setup-codex.sh` and `refresh-codex-skills.sh` create or update `~/.agents/skills/<name>/SKILL.md`
+- each generated `SKILL.md` is copied from `.claude/commands/<name>.md`
+- generation rewrites `CLAUDE.md` to `AGENTS.md`
+- generation rewrites `/command` to `/skills:command`
 
 ### Task file format
 
@@ -319,52 +268,42 @@ Each task is a standalone markdown file:
 ```yaml
 ---
 id: APP-003
-title: Add rate limiting
-status: todo              # todo | in-progress | done | blocked | cancelled
+title: "API-42: Add rate limiting"
+status: todo
 project: api
-priority: high            # high | medium | low
+priority: high
 due: 2025-03-01
 tags: [backend, security]
 created: 2025-01-20
 completed:
 blocked_by:
-effort: 2h                # 30m, 1h, 2h, 4h, 1d, 2d, 1w
+effort: 2h
 actual:
+jira_key: API-42
+jira_url: https://your-company.atlassian.net/browse/API-42
 ---
-
-## Description
-Add rate limiting to public API endpoints.
-
-## Acceptance Criteria
-- [ ] Rate limit by API key
-- [ ] Return 429 with retry-after header
-- [ ] Dashboard shows rate limit hits
-
-## Log
-- 2025-01-20: Created
 ```
 
 ### Dashboard
 
-`dashboard.md` renders live Dataview queries — no manual updates needed:
-
-- Active tasks by project (todo / in-progress / blocked / done counts)
-- Overdue items
-- Due this week
-- High priority backlog
-- Recently completed (last 7 days)
-- Blocked items with dependency info
-- Project health overview
-- Weekly velocity (last 8 weeks)
+`dashboard.md` renders live Dataview queries:
+- active tasks by project
+- overdue items
+- due this week
+- high-priority backlog
+- recently completed tasks
+- blocked items
+- project health overview
+- weekly velocity
 
 ---
 
-## Adding projects
+## Adding projects manually
 
-Run `./add-project.sh`, `./remove-project.sh`, `./setup-claude.sh`, or `./setup-codex.sh` as appropriate, or manage the files manually:
+You can use the scripts or manage the files manually:
 
-1. Create `projects/<name>.md` with frontmatter (id_prefix, next_id, repo path)
-2. Create `tasks/<name>/` directory
+1. Create `projects/<name>.md` with frontmatter like `id_prefix`, `next_id`, and `repo`
+2. Create `tasks/<name>/`
 3. Add the project to the table in `CLAUDE.md`
 4. Add the project to the table in `AGENTS.md`
 5. If you changed `.claude/commands/`, run `./refresh-codex-skills.sh`
@@ -379,8 +318,6 @@ Tasks tracked at /path/to/my-tasks/tasks/<project>/.
 Run /sync at session start, /done when finishing work.
 ```
 
-This makes Claude aware of your task tracker in every dev session.
-
 ---
 
 ## Plugin configuration
@@ -388,28 +325,28 @@ This makes Claude aware of your task tracker in every dev session.
 **Templater**
 - Template folder: `templates/`
 - Enable "Trigger on new file creation"
-- Enable "System commands" (needed for git activity in daily notes)
+- Enable "System commands"
 
 **Periodic Notes**
 - Daily: folder `daily/{{date:YYYY}}/{{date:MM}}`, format `{{date:YYYY-MM-DD}}`, template `templates/daily-template.md`
 - Weekly: folder `weekly/{{date:YYYY}}`, format `{{date:YYYY-[W]WW}}`, template `templates/weekly-template.md`
 
-**Homepage** (optional): set to `dashboard`
+**Homepage** (optional)
+- `dashboard`
 
 ---
 
 ## Design principles
 
-- **Local-first** — plain markdown on your disk, works offline, no accounts
-- **Git-native** — every change is tracked, diffable, mergeable
-- **No lock-in** — works without Claude Code (just slower), works without Obsidian (just less pretty)
-- **Convention over configuration** — file names, frontmatter schema, and folder structure are the database
+- **Local-first**: plain markdown on your disk, works offline
+- **Git-native**: every change is tracked, diffable, mergeable
+- **No lock-in**: works without Claude Code, works without Obsidian
+- **Convention over configuration**: file names, frontmatter schema, and folder structure are the database
 
 ## Requirements
 
-- [Obsidian](https://obsidian.md) (free)
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (for slash commands)
-- OpenAI Codex Agent (for `AGENTS.md` + `/skills:<name>` workflow)
+- [Obsidian](https://obsidian.md)
+- Claude Code or OpenAI Codex
 - Git
 
 ## License

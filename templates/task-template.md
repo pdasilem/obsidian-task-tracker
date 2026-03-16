@@ -11,6 +11,8 @@ completed:
 blocked_by:
 effort:
 actual:
+jira_key:
+jira_url:
 ---
 
 ## Description
