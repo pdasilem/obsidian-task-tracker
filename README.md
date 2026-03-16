@@ -95,8 +95,8 @@ Tasks get created with auto-incremented local IDs, filed in the right folder, an
 **1. Clone into the folder you want to use**
 
 ```bash
-git clone https://github.com/ignatpenshin/obsidian-task-tracker.git ~/project-board
-cd ~/project-board
+git clone https://github.com/pdasilem/obsidian-task-tracker.git ~/obs-task-tracker
+cd ~/obs-task-tracker
 ```
 
 This repository becomes your tracker vault in that exact folder.
